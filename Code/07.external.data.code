@@ -1,0 +1,30 @@
+#external data
+
+library(terra)
+# set the working directory based on your path:
+# setwd("youtpath")
+# W***** users: C:\\path\Downloads -> C://path/Downloads
+# my absolute wd
+setwd("/Users/Cat/Desktop/SPATIAL ECOLOGY R")
+naja23<-rast("najaf2021.jpeg")
+naja03<-rast("najaraf2003.jpeg")
+naja23
+naja03
+par(mfrow=c(2,1))
+plotRGB(naja03, r=1, g=2,b=3)
+plotRGB(naja23, r=1, g=2, b=3)
+
+
+najafdif<- naja03[[1]]-naja23[[1]]
+cl<-colorRampPalette(c("brown", "grey","orange"))(100)
+plot(najafdif, col=cl)
+
+#download your own preferred image
+
+laguna<-rast("laguna.jpeg")
+laguna
+
+# The Mato Grosso image can be downloaded directly from EO-NASA:
+mato <- rast("matogrosso_l5_1992219_lrg.jpg")
+plotRGB(mato, r=1, g=2, b=3) 
+plotRGB(mato, r=2, g=1, b=3) 
