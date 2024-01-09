@@ -9,7 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+```{r,eval=T} #eval=T means that the code should lead to result
+2+3
+```
 #final script including all the different scripts during lectures.
 
 #-----------
