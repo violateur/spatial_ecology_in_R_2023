@@ -6,7 +6,9 @@
 #01 Beginning
 #02.1 Population Density
 #02.2 Population Distributions
-#03 Communities
+#03.1 Community Multivariate Analysis
+#03.2 Community Overlap
+#04 Remote sensing visualisation
 
 #-----------
 
@@ -204,7 +206,7 @@ points(pres, cex=.5)
 
 #------------
 
-#03 Community Multivariate Analysis
+#03.1 Community Multivariate Analysis
 
 #the first study we did is a multivariate analisys on communities
 
@@ -263,3 +265,144 @@ plot(ord)
 plot(ord)
 
 #------------
+
+#03.2 Community Overlap
+# Relation among species in time
+
+library(overlap)
+
+data(kerinci)
+head(kerinci)
+tail(kerinci)
+
+# to obtain some general information about the dataset
+summary(kerinci)
+
+# to analyse the movement of just one species during the day
+tiger <- kerinci[kerinci$Sps=="tiger",]
+
+# to add the column of "circular time" to the dataset
+kerinci$TimeRad <- kerinci$Time * 2 * pi
+
+# let's relaunch the "tiger", now with the parameter "TimeRad"
+tiger <- kerinci[kerinci$Sps=="tiger",]
+
+# let's name the variable "TimeRad" for "tiger"
+TimeRadTiger <- tiger$TimeRad
+
+# to plot the peaks in time of a certain species
+densityPlot(TimeRadTiger, rug=TRUE)
+# the rug is useful to obtain a smoother curve
+
+# exercise: do the same with macaque
+macaque <- kerinci[kerinci$Sps=="macaque",]
+TimeRadMacaque <- macaque$TimeRad
+densityPlot(TimeRadMacaque, rug=TRUE)
+
+# to overlap the plot and, thus, identify juicy information
+overlapPlot(TimeRadTiger, TimeRadMacaque)
+
+#------------
+
+#04 Remote sensing visualisation
+
+# This is a script to visualize satellite data
+
+install.packages("devtools")
+install.packages("terra")
+
+library(devtools)
+library(terra)
+
+devtools::install_github("ducciorocchini/imageRy")
+
+
+library(imageRy)
+im.list()
+
+b2 <- im.import("sentinel.dolomites.b2.tif")
+# install the imageRy package from GitHub
+devtools::install_github("ducciorocchini/imageRy")
+
+###############
+library(imageRy)
+library(terra)
+
+# list the data
+im.list()
+
+b2 <- im.import("sentinel.dolomites.b2.tif")
+
+# let's plot b2 with a specific colour palette
+clb <- colorRampPalette(c("darkgrey","grey","lightgrey")) (100)
+plot(b2, col=clb)
+
+# exercise: let's do the same with the green band from Sentinel-2 (band 3)
+b3 <- im.import("sentinel.dolomites.b3.tif")
+clg <- colorRampPalette(c("darkgrey","grey","lightgrey")) (100)
+plot(b3, col=clg)
+
+# import the red band from Sentinel-2 (band 4)
+b4 <- im.import("sentinel.dolomites.b4.tif") 
+plot(b4, col=cl)
+
+# import the NIR band from Sentinel-2 (band 8)
+b8 <- im.import("sentinel.dolomites.b8.tif") 
+plot(b8, col=cl)
+
+# multiframe
+par(mfrow=c(2,2))
+plot(b2, col=cl)
+plot(b3, col=cl)
+plot(b4, col=cl)
+plot(b8, col=cl)
+
+# stack images
+stacksent <- c(b2, b3, b4, b8)
+dev.off() # it closes devices
+plot(stacksent, col=cl)
+
+plot(stacksent[[4]], col=cl)
+
+# Exercise: plot in a multiframe the bands with different color ramps
+par(mfrow=c(2,2))
+
+clb <- colorRampPalette(c("dark blue", "blue", "light blue")) (100)
+plot(b2, col=clb)
+
+clg <- colorRampPalette(c("dark green", "green", "light green")) (100)
+plot(b3, col=clg)
+
+clr <- colorRampPalette(c("dark red", "red", "pink")) (100)
+plot(b4, col=clr)
+
+cln <- colorRampPalette(c("brown", "orange", "yellow")) (100)
+plot(b8, col=cln)
+
+# RGB space
+# stacksent: 
+# band2 blue element 1, stacksent[[1]] 
+# band3 green element 2, stacksent[[2]]
+# band4 red element 3, stacksent[[3]]
+# band8 nir element 4, stacksent[[4]]
+im.plotRGB(stacksent, r=3, g=2, b=1)
+
+# now let's make a move of "one"
+im.plotRGB(stacksent, r=4, g=3, b=2)
+# this is useful as what reflects the infrared is exactly the vegetation (green)
+
+# let's put the infrared on top of the green component
+im.plotRGB(stacksent, r=3, g=4, b=2)
+# white and violet represent rocks in this case
+
+# let's move the infrared to the blue component
+im.plotRGB(stacksent, r=3, g=2, b=4)
+# in this case he vegetation will be blue
+
+
+# what about the "pairs" function? --> it's useful to identify correlations between variables
+?pairs
+pairs(stacksent)
+
+
+
