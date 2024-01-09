@@ -5,13 +5,16 @@ date: "2024-01-09"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
+In this case you attain the result
 ```{r,eval=T} #eval=T means that the code should lead to result
 2+3
 ```
+
+in this case you do not
+```{r,eval=F} #eval=F means that the code should not lead to result
+2+3
+```
+
 #final script including all the different scripts during lectures.
 
 #-----------
