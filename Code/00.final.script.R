@@ -9,6 +9,8 @@
 #03.1 Community Multivariate Analysis
 #03.2 Community Overlap
 #04 Remote sensing visualisation
+#05 Spectral Indices
+#06 Time Series
 
 #-----------
 
@@ -313,23 +315,10 @@ install.packages("terra")
 
 library(devtools)
 library(terra)
-
-devtools::install_github("ducciorocchini/imageRy")
-
-
-library(imageRy)
-im.list()
-
-b2 <- im.import("sentinel.dolomites.b2.tif")
 # install the imageRy package from GitHub
 devtools::install_github("ducciorocchini/imageRy")
 
-###############
-library(imageRy)
-library(terra)
-
-# list the data
-im.list()
+im.list() 
 
 b2 <- im.import("sentinel.dolomites.b2.tif")
 
@@ -404,5 +393,138 @@ im.plotRGB(stacksent, r=3, g=2, b=4)
 ?pairs
 pairs(stacksent)
 
+#------------
+
+#05 Spectral Indices
+
+## Vegetation indices
+
+library(imageRy)
+library(terra)
+
+im.list()
+
+m1992 <- im.import("matogrosso_l5_1992219_lrg.jpg")
+# this image has been processed
+# bands: 1=NIR, 2=RED, 3=GREEN
+
+im.plotRGB(m1992, r=1, g=2, b=3)
+# this way, all the vegetation "will become" red
+# you can write the same input even this way:
+im.plotRGB(m1992, 1, 2, 3)
+# therefore inverting the colours is easier:
+im.plotRGB(m1992, 2, 1, 3)
+im.plotRGB(m1992, 2, 3, 1)
+# what seems bare soil, in this case, it's water (which usually should be black)
+
+# let's look at the 2006 images
+m2006 <- im.import("matogrosso_ast_2006209_lrg.jpg")
+im.plotRGB(m2006, r=1, g=2, b=3)
+im.plotRGB(m2006, 1, 2, 3)
+im.plotRGB(m2006, 2, 1, 3)
+im.plotRGB(m2006, 2, 3, 1)
+
+# import the recent image
+m2006 <- im.import("matogrosso_ast_2006209_lrg.jpg")
+im.plotRGB(m2006, r=2, g=3, b=1)
+
+# build a multiframe with 1992 and 2006 images
+par(mfrow=c(1,2))
+im.plotRGB(m1992, r=2, g=3, b=1)
+im.plotRGB(m2006, r=2, g=3, b=1)
+
+# DVI = NIR - RED 
+# bands: 1=NIR, 2=RED, 3=GREEN
+
+dvi1992 = m1992[[1]] - m1992[[2]]
+plot(dvi1992)
+
+cl <- colorRampPalette(c("darkblue", "yellow", "red", "black")) (100)
+plot(dvi1992, col=cl)
+
+# exercise: calculate dvi of 2006
+dvi2006 = m2006[[1]] - m2006[[2]]
+plot(dvi2006, col=cl)
+
+# NDVI
+ndvi1992 = (m1992[[1]] - m1992[[2]]) / (m1992[[1]] + m1992[[2]])
+ndvi1992 = dvi1992 / (m1992[[1]] + m1992[[2]])
+plot(ndvi1992, col=cl)
+
+# NDVI
+ndvi2006 = dvi2006 / (m2006[[1]] + m2006[[2]])
+plot(ndvi2006, col=cl)
+
+# par
+par(mfrow=c(1,2))
+plot(ndvi1992, col=cl)
+plot(ndvi2006, col=cl)
+
+clvir <- colorRampPalette(c("violet", "dark blue", "blue", "green", "yellow"))(100) # specifying a color scheme
+par(mfrow=c(1,2))
+plot(ndvi1992, col=clvir)
+plot(ndvi2006, col=clvir)
+
+# speediing up calculation
+ndvi2006a <- im.ndvi(m2006, 1, 2)
+plot(ndvi2006a, col=cl)
+# pay attention that putting the NIF in the blue increases the attention of the viewer (so it's good)
+
+#---------
+
+#06 Time Series
+
+library(terra)
+library(imageRy)
+
+im.list()
+#import the dara 
+EN01<-im.import("EN_01.png")
+EN13<-im.import("EN_13.png")
+
+par(mfrow=c(2,1))
+im.plotRGB.auto(EN01)
+im.plotRGB.auto(EN13)
+
+#using the first element (band) of images
+dif=EN01[[1]]-EN13[[1]]
+
+#palette
+cldif<-colorRampPalette(c("blue","white","red"))(100)
+plot(dif,col=cldif)
+dev.off()
+
+plot(dif)
+
+
+g2000<-im.import("greenland.2000.tif")
+clg<-colorRampPalette(c("black","blue","white","red"))(100)
+plot(g2000,col=clg)
+
+g2005<-im.import("greenland.2005.tif")
+g2010<-im.import("greenland.2010.tif")
+g2015<-im.import("greenland.2015.tif")
+
+plot(g2015,col=clg)
+
+par(mfrow=c(2,2))
+plot(g2000,col=clg)
+plot(g2015,col=clg)
+plot(g2010,col=clg)
+plot(g2005,col=clg)
+
+stackg<-c(g2000,g2005,g2015,g2010)
+
+#exercise: make the differences between the first and final elements of the stack
+gdif<-g2000[[1]]-g2015[[1]]
+clgdif<-colorRampPalette(c( "blue","white","red"))(100)
+plot(gdif,col=clgdif)
+#now you see the most vulnerable parts of land to temperatures
+
+
+#for next time import the data from earth observatory
+
+#exercise: make a RGB plot using different years
+im.plotRGB(stackg, r=1, g=2, b=3) #western part: higher temperatures like usa, in the middle the temperature is higher in the long period.
 
 
