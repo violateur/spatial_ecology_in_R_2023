@@ -11,6 +11,11 @@
 #04 Remote sensing visualisation
 #05 Spectral Indices
 #06 Time Series
+#07 External Data
+#08 Copernicus Data
+#09 Classification
+#10 Variability
+#11 Principal Component Anlysis
 
 #-----------
 
@@ -520,11 +525,240 @@ gdif<-g2000[[1]]-g2015[[1]]
 clgdif<-colorRampPalette(c( "blue","white","red"))(100)
 plot(gdif,col=clgdif)
 #now you see the most vulnerable parts of land to temperatures
-
-
 #for next time import the data from earth observatory
+
+#---------------
+
+#07 External Data
+
+library(terra)
+# set the working directory based on your path:
+# setwd("youtpath")
+# W***** users: C:\\path\Downloads -> C://path/Downloads
+# my absolute wd
+setwd("/Users/Cat/Desktop/SPATIAL ECOLOGY R")
+naja23<-rast("najaf2021.jpeg")
+naja03<-rast("najaraf2003.jpeg")
+naja23
+naja03
+par(mfrow=c(2,1))
+plotRGB(naja03, r=1, g=2,b=3)
+plotRGB(naja23, r=1, g=2, b=3)
+
+
+najafdif<- naja03[[1]]-naja23[[1]]
+cl<-colorRampPalette(c("brown", "grey","orange"))(100)
+plot(najafdif, col=cl)
+
+#download your own preferred image
+
+laguna<-rast("laguna.jpeg")
+laguna
+
+# The Mato Grosso image can be downloaded directly from EO-NASA:
+mato <- rast("matogrosso_l5_1992219_lrg.jpg")
+plotRGB(mato, r=1, g=2, b=3) 
+plotRGB(mato, r=2, g=1, b=3) 
+
 
 #exercise: make a RGB plot using different years
 im.plotRGB(stackg, r=1, g=2, b=3) #western part: higher temperatures like usa, in the middle the temperature is higher in the long period.
+
+#--------------
+
+#08 Copernicus Data
+
+# https://land.copernicus.vgt.vito.be/PDF/portal/Application.html#Browse;Root=71027541;Collection=1000282;DoSearch=true;Time=NORMAL,NORMAL,1,JANUARY,2022,28,NOVEMBER,2023;isReserved=false
+#use copernicus data
+
+library(ncdf4)
+library(terra)
+
+setwd("C:/Users/Diego C/Downloads")
+
+soilmoisture <- rast("c_gls_SSM1km_202311250000_CEURO_S1CSAR_V1.2.1.nc")
+soilmoisture
+plot(soilmoisture)
+# there are 2 elements, let's use the first one
+plot(soilmoisture[[1]])
+# let's change the colours
+cl <- colorRampPalette(c("red", "orange", "yellow")) (100)
+plot(soilmoisture[[1]], col=cl)
+
+# how to crop the stack to a specific extent: define a variable and then crop an image to a certain extent
+ext <- c(20, 23, 55, 57)   # minimum longitude, maximum longitude, minimum latitude, maximum latitude
+soilmoisturecrop <- crop(soilmoisture, ext)
+soilmoisturecrop
+plot(soilmoisturecrop)
+plot(soilmoisturecrop[[1]], col=cl)
+
+# cropping images is very useful for burnt areas, as they are very small on the planet
+
+# let's do the same with an image created exactly 1 year before
+setwd("C:/Users/Diego C/Downloads")
+soilmoisture22 <- rast("c_gls_SSM1km_202211250000_CEURO_S1CSAR_V1.2.1.nc")
+soilmoisture22
+plot(soilmoisture22)
+plot(soilmoisture22[[1]])
+cl <- colorRampPalette(c("red", "orange", "yellow")) (100)
+plot(soilmoisture[[1]], col=cl)
+
+ext <- c(20, 23, 55, 57)   # minimum longitude, maximum longitude, minimum latitude, maximum latitude
+soilmoisture22crop <- crop(soilmoisture22, ext)
+soilmoisture22crop
+plot(soilmoisture22crop)
+plot(soilmoisture22crop[[1]], col=cl)
+
+#------------
+
+#09 Classification
+
+library(terra)
+library(imageRy)
+library(ggplot2)
+
+im.list()
+sun <- im.import("Solar_Orbiter_s_first_views_of_the_Sun_pillars.jpg")
+
+sunc <- im.classify(sun)
+plotRGB(sun, 1, 2, 3)
+plot(sunc)
+
+##### now with matogrosso 
+m2006<-im.import("matogrosso_ast_2006209_lrg.jpg")
+m1992<-im.import("matogrosso_l5_1992219_lrg.jpg")
+plotRGB(m1992)
+
+m1992c<-im.classify(m1992,num_clusters=2) #im.classify tell the amount of classes you want to use to classify
+plot(m1992c) #1 and 2 represent the two classes human and forest. human=1 and forest=2
+
+m2006c<-im.classify(m2006,num_clusters=2)
+plot(m2006c)
+
+par(mfrow=c(1,2))
+plot(m1992c[[1]])
+plot(m2006c[[1]])
+
+f1992<-freq(m1992c)
+f1992
+tot1992<-ncell(m1992c)
+#to get the percentage frequency:
+p1992 <-f1992*100 / tot1992
+p1992
+#forest: 83%; human: 17%
+
+f2006<-freq(m2006c)
+f2006
+tot2006<-ncell(m2006c)
+#to get the percentage frequency:
+p2006 <-f2006*100 / tot2006
+p2006
+#forest: 45; human: 55
+
+#building the final table
+class<- c("forest","human")
+y1992<-c(83,17)
+y2006<-c(45,55)
+
+tabout<-data.frame(class,y1992,y2006)
+tabout
+
+#final output
+p1992<-ggplot(tabout,aes(x=class,y=y1992,color=class))+geom_bar(stat="identity", fill="white")
+p2006<-ggplot(tabout,aes(x=class,y=y2006,color=class))+geom_bar(stat="identity", fill="white")
+par(mfrow=c(1,2))
+plot(p1992)
+plot(p2006)
+
+#------------
+
+#10 Variability
+
+# measurement of RS based variability. there are diff indices for measuring behavior of several data altogether 
+#it is based on multivariate analysis
+
+library(imageRy)
+library(terra)
+library(viridis)
+
+im.list()
+
+sent <- im.import("sentinel.png")
+
+# band 1 = NIR
+# band 2 = red
+# band 3 = green
+
+im.plotRGB(sent, r=1, g=2, b=3)
+im.plotRGB(sent, r=2, g=1, b=3)
+
+nir <- sent[[1]]
+plot(nir)
+
+# moving window
+# focal
+sd3 <- focal(nir, matrix(1/9, 3, 3), fun=sd)
+plot(sd3)
+
+viridisc <- colorRampPalette(viridis(7))(255)
+plot(sd3, col=viridisc)
+
+# Exercise: calculate variability in a 7x7 pixels moving window
+sd7 <- focal(nir, matrix(1/49, 7, 7), fun=sd)
+plot(sd7, col=viridisc)
+
+# Exercise 2: plot via par(mfrow()) the 3x3 and the 7x7 standard deviation
+par(mfrow=c(1,2))
+plot(sd3, col=viridisc)
+plot(sd7, col=viridisc)
+
+# original image plus the 7x7 sd
+im.plotRGB(sent, r=2, g=1, b=3)
+plot(sd7, col=viridisc)
+
+#--------------
+
+#11 Principal component analysis
+
+#in order to make a calculation (ex variability) we should choose that single layer, but it cannot be subjectively. you must compact all the dataset
+#in just one band and use that band (PC1) to make calculations
+
+library(imageRy)
+library(terra)
+library(viridis)
+
+im.list()
+
+sent <- im.import("sentinel.png")
+
+pairs(sent)
+
+# perform PCA on sent
+sentpc <- im.pca(sent)
+pc1 <- sentpc$PC1
+
+viridisc <- colorRampPalette(viridis(7))(255)
+plot(pc1, col=viridisc)
+
+# calculating standard deviation ontop of pc1
+pc1sd3 <- focal(pc1, matrix(1/9, 3, 3), fun=sd)
+plot(pc1sd3, col=viridisc)
+
+pc1sd7 <- focal(pc1, matrix(1/49, 7, 7), fun=sd)
+plot(pc1sd7, col=viridisc)
+
+par(mfrow=c(2,3))
+im.plotRGB(sent, 2, 1, 3)
+# sd from the variability script:
+plot(sd3, col=viridisc)
+plot(sd7, col=viridisc)
+plot(pc1, col=viridisc)
+plot(pc1sd3, col=viridisc)
+plot(pc1sd7, col=viridisc)
+
+# stack all the standard deviation layers
+sdstack <- c(sd3, sd7, pc1sd3, pc1sd7)
+names(sdstack) <- c("sd3", "sd7", "pc1sd3", "pc1sd7")
+plot(sdstack, col=viridisc)
 
 
