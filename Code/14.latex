@@ -1,0 +1,331 @@
+#############
+PAPER
+
+\documentclass[a4paper, 12pt]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{lineno}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{color}
+\linenumbers
+\newcommand{\tb}{\textcolor{blue}}
+\linespread{1.5}
+
+\title{First paper in Physalia}
+\author{Duccio Rocchini $^1$}
+\date{ } 
+
+% TeXLive
+% kile
+
+\begin{document}
+
+\maketitle
+
+$^1$ UNIBO - via Irnerio....
+
+\tableofcontents
+
+\begin{abstract}
+The house stood on a slight rise just on the edge of the village. It stood on its own and looked out over a broad spread of West Country farmland. Not a remarkable house by any means—it was about thirty years old, squattish, squarish, made of brick, and had four windows set in the front of a size and proportion which more or less exactly failed to please the eye.
+\end{abstract}
+\section{Introduction} % sections with no numbers
+
+\tb{The only person for whom the house was in any way special was Arthur Dent, and that was only because it happened to be the one he lived in.} As we will see in Section \ref{sec:methods}, he had lived in it for about three years, ever since he had moved out of London because it made him nervous and irritable. \tb{He was about thirty as well}, tall, dark-haired and never quite at ease with himself. The thing that used to worry him most was the fact that people always used to ask him what he was looking so worried about. He worked in local radio which he always used to tell his friends was a lot more interesting than they probably thought. It was, too—most of his friends worked in advertising.
+
+The only person for whom the house was in any way special was Arthur Dent, and that was only because it happened to be the one he lived in. He had lived in it for about three years, ever since he had moved out of London because it made him nervous and irritable. He was about thirty as well, tall, dark-haired and never quite at ease with himself. The thing that used to worry him most was the fact that people always used to ask him what he was looking so worried about. He worked in local radio which he always used to tell his friends was a lot more interesting than they probably thought. It was, too—most of his friends worked in advertising.
+
+\section{Methods}\label{sec:methods}
+\subsection{Study area} % itemize
+The thing that used to worry him most was the fact that people always used to ask him what he was looking so worried about (Figure \ref{fig:brenta}). He worked in local radio which he always used to tell his friends was a lot more interesting than they probably thought. It was, too—most of his friends worked in advertising (Figure \ref{fig:lake}).
+
+\noindent The main characteristics of the study area are:
+\begin{itemize}
+    \item Elevation: 3000 meters
+    \item Precipitations: n mm per year
+    \item Meam Annual Temperature: 12 degrees
+\end{itemize}
+
+\noindent The main characteristics of the study area are:
+\begin{enumerate}
+    \item Elevation: 3000 meters
+    \item Precipitations: n mm per year
+    \item Meam Annual Temperature: 12 degrees
+\end{enumerate}
+
+\subsection{Statistical analysis}
+The calculation done in this manuscript can be viewed in Equation \ref{eq:newton}.
+
+\begin{equation}
+    F = \sqrt[3]{G \times \frac{m_1 \times m_2}{r^2}}
+    \label{eq:newton}
+\end{equation}
+
+\section{Results}
+
+The only person for whom the house was in any way special was Arthur Dent, and that was only because it happened to be the one he lived in. He had lived in it for about three years, ever since he had moved out of London because it made him nervous and irritable. He was about thirty as well, tall, dark-haired and never quite at ease with himself. The thing that used to worry him most was the fact that people always used to ask him what he was looking so worried about. He worked in local radio which he always used to tell his friends was a lot more interesting than they probably thought. It was, too—most of his friends worked in advertising.
+
+
+\section{Discussion}
+The only person for whom the house was in any way special was Arthur Dent, and that was only because it happened to be the one he lived in. He had lived in it for about three years, ever since he had moved out of London because it made him nervous and irritable. He was about thirty as well, tall, dark-haired and never quite at ease with himself. The thing that used to worry him most was the fact that people always used to ask him what he was looking so worried about. He worked in local radio which he always used to tell his friends was a lot more interesting than they probably thought. It was, too—most of his friends worked in advertising \citep{yoccoz2001}.
+
+\begin{thebibliography}{999}
+    \bibitem[Yoccoz et al.(2021)]{yoccoz2001}
+    Yoccoz, N. G., Nichols, J. D., \& Boulinier, T. (2001). Monitoring of biological diversity in space and time. Trends in Ecology \& Evolution, 16(8), 446-453.
+\end{thebibliography}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{dolbr.jpg}
+    \caption{This is a sketch of the Brenta mountain.}
+    \label{fig:brenta}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{lake.jpg}
+    \caption{This is a sketch of the Brenta mountain.}
+    \label{fig:lake}
+\end{figure}
+
+\end{document}
+
+#####################
+PRESENTATIONS
+
+\documentclass{beamer}
+\usepackage{listings}
+% 
+% https://mpetroff.net/files/beamer-theme-matrix/
+\usetheme{Warsaw} % Frankfurt | Warsaw
+\usecolortheme{dove} %crane  dove dolphin beaver dove
+% % block styles
+\setbeamertemplate{blocks}[rounded][shadow=true]
+% 
+% plot(inputtable)
+
+\title{Choose your preferred title}
+ \subtitle{beamer}
+ \author{Duccio Rocchini, The PhD students}
+ \institute{
+ Alma Mater Studiorum UniBO\\
+ \bigskip
+ \includegraphics[width=0.3\textwidth]{satellite2.jpeg}
+ }
+
+\begin{document}
+\maketitle
+
+\AtBeginSection[] % Do nothing for \section*
+{
+\begin{frame}
+\frametitle{Outline}
+\tableofcontents[currentsection]
+\end{frame}
+}
+
+\section{Introduction}
+
+\begin{frame}{My very first slide in LaTeX: hoorray!!}
+    \texttt{My first text here!!}
+\end{frame}
+
+\begin{frame}{My very first slide in LaTeX: hoorray!!}
+    \scriptsize{My first text here!!}
+\end{frame}
+
+\begin{frame}{My very first slide in LaTeX: hoorray!!}
+    \tiny{My first text here!!}
+\end{frame}
+
+
+
+\begin{frame}{My very first slide in LaTeX: hoorray!!}
+    My first text here!! \\
+    Here write the second sentence. \\
+    Third sentence here.
+\end{frame}
+
+
+\begin{frame}{My very first slide in LaTeX: hoorray!!}
+    My first text here!! \\
+    \bigskip
+    Here write the second sentence. \\
+
+\bigskip
+    Third sentence here.
+\end{frame}
+
+\subsection{Itemizing}
+
+\begin{frame}
+ \frametitle{Itemizing}
+ \begin{itemize}
+  \item Remote sensing is a powerful tool
+  \item It can be used for diversity estimate
+  \item It can be used in ecological informatics
+ \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+ \frametitle{Itemizing}
+ \begin{itemize}
+  \item<1> Remote sensing is a powerful tool
+  \item<2> It can be used for diversity estimate
+  \item<3> It can be used in ecological informatics
+ \end{itemize}
+\end{frame}
+
+\begin{frame}
+ \frametitle{Itemizing}
+ \begin{itemize}
+  \item<1-> Remote sensing is a powerful tool
+  \item<2-> It can be used for diversity estimate
+  \item<3-> It can be used in ecological informatics
+   \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}{Itemizing}
+\begin{itemize}
+    \item first item
+    \item second item: I love ecology
+    \item I love Biol Geol Env Sci
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Itemizing}
+\begin{itemize}
+\tiny{
+    \item<1-> first item
+    \item<2-> second item: I love ecology
+    \item<3-> love Biol Geol Env Sci
+}
+\end{itemize}
+\end{frame}
+
+\section{Figures}
+\begin{frame}{Adding a figure}
+\centering
+ \includegraphics[width=0.9\textwidth]{satellite2.jpeg}
+\end{frame}
+
+\begin{frame}{Adding a figure}
+\centering
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}
+\end{frame}
+
+\begin{frame}{Adding a figure}
+\centering
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}\\
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}
+  \includegraphics[width=0.4\textwidth]{satellite2.jpeg}\\
+\end{frame}
+
+\begin{frame}{Adding a figure}
+\centering
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}\\
+ \bigskip
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}
+  \includegraphics[width=0.4\textwidth]{satellite2.jpeg}\\
+\end{frame}
+
+
+\begin{frame}{Adding a figure}
+\centering
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}\\
+ \smallskip
+ \includegraphics[width=0.4\textwidth]{satellite2.jpeg}
+  \includegraphics[width=0.4\textwidth]{satellite2.jpeg}\\
+  \end{frame}
+
+\section{Formulas}
+
+
+\begin{frame}{Formulaaaaaaaas!}
+    \begin{equation}
+        H' = - \sum_{i=1}^{N} p_i \times \log{p_i}
+    \end{equation}
+\end{frame}
+
+\begin{frame}{More difficult formulas...}
+Let's experience the easiness of writing difficult formulas:
+\begin{equation}
+K_{\alpha}=\frac{1}{\left( \sum_{i=1}^{N} p_i \times p_i^{\alpha-1} \right)^{\frac{1}{\alpha-1}}} 
+\end{equation}
+\end{frame}
+
+
+\begin{frame}{Formulaaaaaaaas!}
+Bla bla bla I love formulas, especially into my sentences
+$H' = - \sum_{i=1}^{N} p_i \times \log{p_i}$ and blablabla again
+\end{frame}
+
+\begin{frame}{More info on formulas...}
+\url{https://en.wikibooks.org/wiki/LaTeX/Mathematics}
+\end{frame}
+
+\begin{frame}{Formulas that no other software can do!}
+    \begin{equation}
+    M_d=
+     \begin{pmatrix}
+    d_{\lambda_1,\lambda_1} & d_{\lambda_1,\lambda_2} & d_{\lambda_1,\lambda_3} & \cdots & d_{\lambda_1,\lambda_n} \\
+    d_{\lambda_2,\lambda_1} & d_{\lambda_2,\lambda_2} & d_{\lambda_2,\lambda_3} & \cdots & d_{\lambda_2,\lambda_n} \\
+    d_{\lambda_3,\lambda_1} & d_{\lambda_3,\lambda_2} & d_{\lambda_3,\lambda_3} & \cdots & d_{\lambda_3,\lambda_n} \\
+    \vdots  & \vdots  & \vdots  & \ddots & \vdots  \\
+    d_{\lambda_n,\lambda_1} & d_{\lambda_n,\lambda_2} & d_{\lambda_n,\lambda_3} & \cdots & d_{\lambda_n,\lambda_n}
+    \end{pmatrix}
+    \end{equation}
+\end{frame}
+
+\begin{frame}{The code!}
+    \lstinputlisting[language=R]{list2.r}
+\end{frame}
+
+\begin{frame}{The code!}
+    \lstinputlisting[language=R]{list2.r} \\
+    \bigskip
+    This is the function of R we are using, where:
+    \begin{itemize}
+        \item x = input file...
+        \item $\alpha$ = blablabla
+         \end{itemize}
+\end{frame}
+
+\begin{frame}{text plus figure}
+    \centering
+    The final result achieved was that represented in the following figure.\\
+    % \smallskip
+    \bigskip
+    \includegraphics[width=0.7 \textwidth]{andromeda.png}
+\end{frame}
+\begin{frame}{Columns in beamer}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \centering
+        Text here
+        \column{0.5\textwidth}
+        \centering
+        Text here
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Columns in beamer}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \centering
+        Text here
+        \column{0.5\textwidth}
+        \centering
+        \includegraphics[width=.8\textwidth]{andromeda.png}
+    \end{columns}
+\end{frame}
+
+
+ \end{document}
