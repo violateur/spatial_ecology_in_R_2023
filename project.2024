@@ -1,1 +1,23 @@
+install.packages("terra")
+install.packages("raster")
+install.packages("readxl")
+
+library(terra)
+library(raster)
+library(readxl)
+setwd("/Users/Cat/Desktop/SPATIALECOLOGY")
+
+#lets begin with the map of soc by FAO
+tif_file<-"GSOCmap1.5.0 copia.tif"
+raster_data<-raster(tif_file)
+#print(raster_data)
+#plot(raster_data)
+ext <- c(68.194128, 97.395358, 6.753515,37.084107)
+indiasoc<-crop(raster_data, ext)
+plot(indiasoc)
+#we now have the data of SOC for India of 2019
+
+#now we read the excel of MPI data
+excel_mpi<-read_excel("ind_hot (1).xlsx")
+str(excel_mpi)
 
