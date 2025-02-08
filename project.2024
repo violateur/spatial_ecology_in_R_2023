@@ -7,6 +7,9 @@ library(raster)
 library(readxl)
 setwd("/Users/Cat/Desktop/SPATIALECOLOGY")
 
+#my purpose is to verify if there is a correlation between the soil organic carbon and the multidimensional poverty index in the case 
+#of India. I do so by uploading two files with the data requested (one map of SOC by FAO) and 
+
 #lets begin with the map of soc by FAO
 tif_file<-"GSOCmap1.5.0 copia.tif"
 raster_data<-raster(tif_file)
@@ -21,3 +24,4 @@ plot(indiasoc)
 excel_mpi<-read_excel("ind_hot (1).xlsx")
 str(excel_mpi)
 
+#
