@@ -1,27 +1,108 @@
 install.packages("terra")
 install.packages("raster")
 install.packages("readxl")
+install.packages("leaflet")
+install.packages("tidyterra")
+install.packages("dplyr")
+install.packages("geodata")
+install.packages("predicts")
+install.packages("ggplot2")
+install.packages("maps")
 
-library(terra)
+library(ggplot2)       # Data visualization with customizable plots
+library(maps)          # World map data for geographic visualization
+library(leaflet)       # Create interactive maps # Extras from the leaflet
+library(readxl)         # Import excel files into R. Supports '.xls' via the embedded 'libxls' C library
+library(terra)         # Tools for spatial data manipulation (raster/vector)
+library(tidyterra)     # Integrates 'terra' with 'tidyverse' for tidy data workflows
+library(dplyr)         # Tidyverse package for data manipulation
+library(geodata)       # Access and download geospatial/climate data
+library(predicts)  # Spatial predictive modeling, e.g., species distribution
 library(raster)
-library(readxl)
+
+# Set the wd
+
 setwd("/Users/Cat/Desktop/SPATIALECOLOGY")
 
-#my purpose is to verify if there is a correlation between the soil organic carbon and the multidimensional poverty index in the case 
-#of India. I do so by uploading two files with the data requested (one map of SOC by FAO) and one with the mdpi. 
+# Create a dynamic map for the visualization of SOC sequestration by FAO of three different
+# SOC stock scenario in three sustainable soil management, more than business as usual (SSM1, SSM2, SSM3, BAU).
+# The data have been collected at country level by a massive cooperative work driven by FAO
 
-#lets begin with the map of soc by FAO
+#lets begin with the initial map of stocked soc by FAO
 tif_file<-"GSOCmap1.5.0 copia.tif"
-raster_data<-raster(tif_file)
-#print(raster_data)
-#plot(raster_data)
+raster_data<-rast(tif_file)
+
+# We crop with the india extent manually
 ext <- c(68.194128, 97.395358, 6.753515,37.084107)
-indiasoc<-crop(raster_data, ext)
-plot(indiasoc)
+indiasoc19<-crop(raster_data, ext)
+
 #we now have the data of SOC for India of 2019
+
+#harmonized world soil database
+
+raster_hwsd <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/HWSD_RASTER/hwsd.bil")
+hwsd_india_diff<-crop(raster_hwsd, ext)
+print(hwsd_india_diff) # I check the extent: 68.19167, 97.39167, 6.75, 37.08333  (xmin, xmax, ymin, ymax)
+plot(hwsd_india_diff)
+
+# The extent is not the same as indiasoc19.
+# With resample from terra package we want to make match of the extents
+
+hwsd_india <- resample(hwsd_india_diff, indiasoc19, method = "bilinear")
+plot(hwsd_india)
+
+# We check the resample went well checkin the extent and the resolution
+ext(hwsd_india)
+ext(indiasoc19)
+
+# Check resolution
+res(hwsd_india)
+res(indiasoc19)
+
+# Check number of rows and columns
+dim(hwsd_india)
+dim(indiasoc19)
+
+# Check Coordinate Reference System (CRS)
+crs(hwsd_india)
+crs(indiasoc19)
+
+# We also do a visual check 
+plot(indiasoc19, col = "lightgray")
+plot(hwsd_india, add = TRUE, alpha = 0.5)
+
+# The resampling went well.
+
+
+#raster of sequestered soc 
+raster_gsoc_seq_bau <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_T0_Map030.tif")
+india_soc_seq_bau<-crop(raster_gsoc_seq_bau, ext)
+print(india_soc_seq_bau)
+plot(india_soc_seq_bau)
+
+
+raster_final_soc_bau <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_finalSOC_BAU_Map030.tif")
+india_final_soc_bau<-crop(raster_final_soc_bau, ext)
+print(india_final_soc_bau)
+plot(india_final_soc_bau)
+
+raster_final_soc_ssm1<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_finalSOC_SSM1_Map030.tif")
+india_final_soc_ssm1<-crop(raster_final_soc_ssm1, ext)
+print(india_final_soc_ssm1)
+plot(india_final_soc_ssm1)
+
+raster_final_soc_ssm2<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_RSR_SSM2_Map030.tif")
+india_final_soc_ssm2<-crop(raster_final_soc_ssm2, ext)
+print(india_final_soc_ssm2)
+plot(india_final_soc_ssm2)
+
+raster_final_soc_ssm3<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_RSR_SSM3_Map030.tif")
+india_final_soc_ssm3<-crop(raster_final_soc_ssm3, ext)
+print(india_final_soc_ssm3)
+plot(india_final_soc_ssm3)
+
 
 #now we read the excel of MPI data
 excel_mpi<-read_excel("ind_hot (1).xlsx")
 str(excel_mpi)
-
-#
+View(excel_mpi)
