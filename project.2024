@@ -1,30 +1,23 @@
-install.packages("terra")
-install.packages("raster")
-install.packages("readxl")
-install.packages("leaflet")
-install.packages("tidyterra")
-install.packages("dplyr")
-install.packages("geodata")
-install.packages("predicts")
-install.packages("ggplot2")
-install.packages("maps")
+#I investigate pedological conditions and projections for India, I use data from the Harmonized World Soil Database, the SOC data from
+#FAO and the projections under BAU and three scenarios of different addictive carbon inputs, climatic data from geodata packages, land use 
+#cover data from copernicus. we use a species distribution model SDM to 
 
-library(ggplot2)       # Data visualization with customizable plots
-library(maps)          # World map data for geographic visualization
-library(leaflet)       # Create interactive maps # Extras from the leaflet
-library(readxl)         # Import excel files into R. Supports '.xls' via the embedded 'libxls' C library
-library(terra)         # Tools for spatial data manipulation (raster/vector)
-library(tidyterra)     # Integrates 'terra' with 'tidyverse' for tidy data workflows
-library(dplyr)         # Tidyverse package for data manipulation
-library(geodata)       # Access and download geospatial/climate data
-library(predicts)  # Spatial predictive modeling, e.g., species distribution
+install.packages(c("terra","dplyr","raster","geodata","usdm","sdmpredictors","dismo"))
+
+library(terra)
+library(tidyterra)
+library(sp)
 library(raster)
+library(dplyr)
+library(geodata)
+library(usdm)
+library(sdmpredictors)
+library(dismo)
 
 # Set the wd
 
 setwd("/Users/Cat/Desktop/SPATIALECOLOGY")
 
-# Create a dynamic map for the visualization of SOC sequestration by FAO of three different
 # SOC stock scenario in three sustainable soil management, more than business as usual (SSM1, SSM2, SSM3, BAU).
 # The data have been collected at country level by a massive cooperative work driven by FAO
 
@@ -38,8 +31,7 @@ indiasoc19<-crop(raster_data, ext)
 
 #we now have the data of SOC for India of 2019
 
-#harmonized world soil database
-
+#harmonized world soil database, which contains information about texture, depth, salinity and water retention
 raster_hwsd <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/HWSD_RASTER/hwsd.bil")
 hwsd_india_diff<-crop(raster_hwsd, ext)
 print(hwsd_india_diff) # I check the extent: 68.19167, 97.39167, 6.75, 37.08333  (xmin, xmax, ymin, ymax)
@@ -47,7 +39,6 @@ plot(hwsd_india_diff)
 
 # The extent is not the same as indiasoc19.
 # With resample from terra package we want to make match of the extents
-
 hwsd_india <- resample(hwsd_india_diff, indiasoc19, method = "bilinear")
 plot(hwsd_india)
 
@@ -73,36 +64,58 @@ plot(hwsd_india, add = TRUE, alpha = 0.5)
 
 # The resampling went well.
 
-
-#raster of sequestered soc 
+#raster of sequestered soc cropped for india
 raster_gsoc_seq_bau <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_T0_Map030.tif")
-india_soc_seq_bau<-crop(raster_gsoc_seq_bau, ext)
-print(india_soc_seq_bau)
-plot(india_soc_seq_bau)
+seq_bau<-crop(raster_gsoc_seq_bau, ext)
+print(seq_bau)
+plot(seq_bau)
 
-
+#download and crop the SOC proiection for the BAU scenario
 raster_final_soc_bau <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_finalSOC_BAU_Map030.tif")
-india_final_soc_bau<-crop(raster_final_soc_bau, ext)
-print(india_final_soc_bau)
-plot(india_final_soc_bau)
+bau<-crop(raster_final_soc_bau, ext)
+print(bau)
+plot(bau)
 
+#download and crop the SOC proiection for the ssm1 scenario, or low carbon inputs (5%) in a sustainable management soil scenario
 raster_final_soc_ssm1<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_finalSOC_SSM1_Map030.tif")
-india_final_soc_ssm1<-crop(raster_final_soc_ssm1, ext)
-print(india_final_soc_ssm1)
-plot(india_final_soc_ssm1)
+ssm1<-crop(raster_final_soc_ssm1, ext)
+print(ssm1)
+plot(ssm1)
 
+#download and crop the SOC proiection for the ssm2 scenario, or medium carbon inputs (10%) 
 raster_final_soc_ssm2<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_RSR_SSM2_Map030.tif")
-india_final_soc_ssm2<-crop(raster_final_soc_ssm2, ext)
-print(india_final_soc_ssm2)
-plot(india_final_soc_ssm2)
+ssm2<-crop(raster_final_soc_ssm2, ext)
+print(ssm2)
+plot(ssm2)
 
+#download and crop the SOC proiection for the ssm1 scenario, or high carbon inputs (20%) 
 raster_final_soc_ssm3<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_RSR_SSM3_Map030.tif")
-india_final_soc_ssm3<-crop(raster_final_soc_ssm3, ext)
-print(india_final_soc_ssm3)
-plot(india_final_soc_ssm3)
+ssm3<-crop(raster_final_soc_ssm3, ext)
+print(ssm3)
+plot(ssm3)
 
+#%%%%% I want to evaluate area at desertification risk, so i evaluate the absolute and relative variation
+# in initial and final SOC
+delta_bau <- bau - indiasoc19
+delta_perc_bau <- ((bau - indiasoc19) / indiasoc19) * 100
+delta_ssm1 <- ssm1 - indiasoc19
+delta_perc_ssm1 <- ((ssm1 - indiasoc19) / indiasoc19) * 100
+delta_ssm2 <- ssm2 - indiasoc19
+delta_perc_ssm2 <- ((ssm2 - indiasoc19) / indiasoc19) * 100
+delta_ssm3 <- ssm3 - indiasoc19
+delta_perc_ssm3 <- ((ssm3 - indiasoc19) / indiasoc19) * 100
 
-#now we read the excel of MPI data
-excel_mpi<-read_excel("ind_hot (1).xlsx")
-str(excel_mpi)
-View(excel_mpi)
+#I plot variation to gain information on the area with the loss of SOC greater than the 10% for the BAU and for ssm1,ssm2 and ssm3
+plot(delta_perc_bau, main = "Δ% SOC - Scenario BAU", col = terrain.colors(20))
+plot(delta_perc_bau < -10, main = "Aree con perdita >10% - BAU", col = c("white", "red"))
+
+plot(delta_perc_ssm1, main = "Δ% SOC - Scenario ssm1", col = terrain.colors(20))
+plot(delta_perc_ssm1 < -10, main = "Aree con perdita >10% - ssm1", col = c("white", "red"))
+
+plot(delta_perc_ssm2, main = "Δ% SOC - Scenario ssm2", col = terrain.colors(20))
+plot(delta_perc_ssm2 < -10, main = "Aree con perdita >10% - ssm2", col = c("white", "red"))
+
+plot(delta_perc_ssm3, main = "Δ% SOC - Scenario ssm3", col = terrain.colors(20))
+plot(delta_perc_ssm3 < -10, main = "Aree con perdita >10% - ssm3", col = c("white", "red"))
+
+#
