@@ -1,4 +1,4 @@
-#I investigate pedological conditions and projections for India, I use data from the Harmonized World Soil Database, the SOC data from
+a#I investigate pedological conditions and projections for India, I use data from the Harmonized World Soil Database, the SOC data from
 #FAO and the projections under BAU and three scenarios of different addictive carbon inputs, climatic data from geodata packages, land use 
 #cover data from copernicus. we use a species distribution model SDM to 
 
