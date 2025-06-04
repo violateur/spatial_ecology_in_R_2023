@@ -1,0 +1,82 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+% Define brown color (RGB values)
+\definecolor{Brown}{RGB}{150, 75, 0}
+% Brown and black color theme
+\usecolortheme[named=Brown]{structure}
+\setbeamercolor{title}{fg=black}
+\setbeamercolor{frametitle}{fg=black,bg=white}
+\setbeamercolor{normal text}{fg=black,bg=white}
+\setbeamercolor{section in toc}{fg=brown}
+\setbeamercolor{item}{fg=brown}
+\setbeamercolor{item projected}{bg=brown,fg=white}
+
+\usetheme{Madrid}
+
+\title[GLM vs SDM for Soil Carbon]{Analysis and Comparison of GLM and SDM Approaches for Soil Organic Carbon Sequestration Modeling in Italy}
+\author{\textbf{Maria Caterina Vaccari}}
+\institute{\large{\textbf{Monitoring Ecosystems Changes and Functionings, University of Bologna}}}
+\date{June 2025}
+
+\begin{document}
+
+% Definiamo il template di background con immagine
+\newcommand{\setbackgroundimage}{
+  \setbeamertemplate{background}{%
+    \parbox[c][\paperheight][c]{\paperwidth}{%
+      \includegraphics[width=1.1\paperwidth,height=1.1\paperheight]{immaginecopertina.png}%
+    }%
+  }
+}
+
+% E un template vuoto per rimuovere background
+\newcommand{\clearbackgroundimage}{
+  \setbeamertemplate{background}{}
+}
+
+% Prima slide con sfondo immagine
+\setbackgroundimage
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% Rimuovo lo sfondo dalle slide successive
+\clearbackgroundimage
+
+% Reset dello sfondo per le slide successive (nessun background)
+\usebackgroundtemplate{}
+
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+\section{Introduction and Motivation}
+
+\begin{frame}{Context and Importance of Soil Carbon Sequestration}
+  \begin{itemize}
+    \item Soil Organic Carbon (SOC) is a critical component of the global carbon cycle and climate regulation.
+    \item Soils store more carbon than the atmosphere and vegetation combined, making them key for carbon mitigation.
+    \item Understanding spatial patterns and dynamics of SOC sequestration informs land management and climate policy.
+    \item SOC sequestration depends on complex interactions between climate, land use, soil properties, and management practices.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Project Objectives}
+  \begin{itemize}
+    \item Develop and compare two spatial modeling approaches to predict SOC sequestration potential in Italy:
+    \begin{itemize}
+      \item Generalized Linear Models (GLM) — parametric, interpretable, well suited for hypothesis testing.
+      \item Species Distribution Models (SDM) — non-parametric or semi-parametric, often used in ecological niche modeling, here adapted for SOC.
+    \end{itemize}
+    \item Use raster datasets of SOC for 2019 (baseline) and a Business As Usual (BAU) scenario to identify SOC change hotspots.
+    \item Integrate climatic variables (WorldClim) and land use data (Copernicus Land Cover) as environmental predictors.
+    \item Identify areas at risk of SOC loss and potential desertification.
+  \end{itemize}
+\end{frame}
+
