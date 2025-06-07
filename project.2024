@@ -1,121 +1,173 @@
-a#I investigate pedological conditions and projections for India, I use data from the Harmonized World Soil Database, the SOC data from
-#FAO and the projections under BAU and three scenarios of different addictive carbon inputs, climatic data from geodata packages, land use 
-#cover data from copernicus. we use a species distribution model SDM to 
+# Installazione dei pacchetti necessari
+install.packages(c("terra", "sf", "dplyr", "ggplot2", "caret", "raster", "sp","caret","devtools"))
+devtools::install_github("rspatial/geodata")
 
-install.packages(c("terra","dplyr","raster","geodata","usdm","sdmpredictors","dismo"))
-
+# Caricamento dei pacchetti
 library(terra)
-library(tidyterra)
-library(sp)
-library(raster)
+library(sf)
 library(dplyr)
+library(ggplot2)
+library(raster)
+library(sp)
 library(geodata)
-library(usdm)
-library(sdmpredictors)
-library(dismo)
-
-# Set the wd
+library(caret)
 
 setwd("/Users/Cat/Desktop/SPATIALECOLOGY")
+#Raster SOCseq 2019
+socseq_2019 <- rast("data/GSOCseq_T0_Map030.tif")
+#Estensione dell'Italia. Scarica l'Italia (livello 0 = nazionale)
+italy_vect <- geodata::gadm(country = "ITA", level = 0, path = "data/")
+italy_vect_proj <- project(italy_vect, crs(socseq_2019))
 
-# SOC stock scenario in three sustainable soil management, more than business as usual (SSM1, SSM2, SSM3, BAU).
-# The data have been collected at country level by a massive cooperative work driven by FAO
+#Raster socseq 2020 for Italy (crop and mask)
+socseq_italy <- crop(socseq_2019, italy_vect_proj)    
+socseq_italy <- mask(socseq_italy, italy_vect_proj)  
 
-#lets begin with the initial map of stocked soc by FAO
-tif_file<-"GSOCmap1.5.0 copia.tif"
-raster_data<-rast(tif_file)
+#Raster SOC 2019 
+soc_2019 <- rast("data/GSOCmap1.5.0 copia.tif")
+#Raster socseq 2020 for Italy (crop and mask)
+soc_italy <- crop(soc_2019, italy_vect_proj)    
+soc_italy <- mask(soc_italy, italy_vect_proj)  
 
-# We crop with the india extent manually
-ext <- c(68.194128, 97.395358, 6.753515,37.084107)
-indiasoc19<-crop(raster_data, ext)
+#Raster uso suolo Italia
+layers <- st_layers("data/usosuoloitalia.gdb")
+print(layers)
+usosuolo_vector <- st_read("data/usosuoloitalia.gdb", layer = "U2018_CLC2018_V2020_20u1")
+usosuolo_vect <- vect(usosuolo_vector)
+soc_template <- rast("data/italy_soc_2019.tif")
+usosuolo_vect <- project(usosuolo_vect, crs(soc_template))
+usosuolo_italy <- rasterize(usosuolo_vect, soc_template, field = "Code_18")
 
-#we now have the data of SOC for India of 2019
+#Riclassifico per eliminare le categorie superflue al computo del SOC
+reclass_matrix <- matrix(c(
+10, 10,
+20, 20,
+30, 30,
+40, 40,
+50, 50,
+60, NA,
+70, NA,
+80, NA,
+90, NA,
+100, NA
+), ncol = 2, byrow = TRUE)
+usosuolo_riclass <- classify(usosuolo_italy, rcl = reclass_matrix)
+usosuolo_res <- resample(usosuolo_riclass, socseq_italy, method = "near")
+print(usosuolo_res)
 
-#harmonized world soil database, which contains information about texture, depth, salinity and water retention
-raster_hwsd <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/HWSD_RASTER/hwsd.bil")
-hwsd_india_diff<-crop(raster_hwsd, ext)
-print(hwsd_india_diff) # I check the extent: 68.19167, 97.39167, 6.75, 37.08333  (xmin, xmax, ymin, ymax)
-plot(hwsd_india_diff)
+#Tasmin da lista a unico raster
+files_tasmin <- list.files("data/tasmin", pattern = "\\.tif$", full.names = TRUE)
+tasmin_stack <- rast(files_tasmin) #Carico tutti i raster in uno stack
+print(tasmin_stack) #Controllo la dimensione e se serve allineare raster (devono avere stessa estensione e risoluzione)
+tasmin_mean <- mean(tasmin_stack, na.rm = TRUE) #Creo raster aggregato (media annuale)
 
-# The extent is not the same as indiasoc19.
-# With resample from terra package we want to make match of the extents
-hwsd_india <- resample(hwsd_india_diff, indiasoc19, method = "bilinear")
-plot(hwsd_india)
+#Tasmax 
+files_tasmax <- list.files("data/tasmax", pattern = "\\.tif$", full.names = TRUE)
+tasmax_stack <- rast(files_tasmax)
+tasmax_mean <- mean(tasmax_stack, na.rm = TRUE)
 
-# We check the resample went well checkin the extent and the resolution
-ext(hwsd_india)
-ext(indiasoc19)
+#Precip
+files_precip <- list.files("data/precipitation", pattern = "\\.tif$", full.names = TRUE)
+precip_stack <- rast(files_precip)
+precip_sum <- sum(precip_stack, na.rm = TRUE)  
 
-# Check resolution
-res(hwsd_india)
-res(indiasoc19)
+#NDVI
+files_ndvi <- list.files("data/ndvi_italia", pattern = "\\.tif$", full.names = TRUE)
+ndvi_stack <- rast(files_ndvi)
+plot(ndvi_stack)
+ndvi_mean <- mean(ndvi_stack, na.rm = TRUE)
 
-# Check number of rows and columns
-dim(hwsd_india)
-dim(indiasoc19)
+#Risaldo raster a socseq_italy
+ndvi_italy <- resample(ndvi_mean, socseq_italy, method = "bilinear")
+tasmin_italy <- resample(tasmin_mean, socseq_italy, method = "bilinear")
+tasmax_italy <- resample(tasmax_mean, socseq_italy, method = "bilinear")
+precip_italy <- resample(precip_sum, socseq_italy, method = "bilinear")
 
-# Check Coordinate Reference System (CRS)
-crs(hwsd_india)
-crs(indiasoc19)
+#Creo lo stack dei predittori
+predictors <- c(usosuolo_italy, tasmin_italy, tasmax_italy, precip_italy, ndvi_italy, soc_italy)
+names(predictors) <- c("usosuolo", "tasmin", "tasmax", "precipitation", "ndvi", "SOC")
 
-# We also do a visual check 
-plot(indiasoc19, col = "lightgray")
-plot(hwsd_india, add = TRUE, alpha = 0.5)
+#Estraggo i valori dei predittori e del SOCseq
+data_values <- as.data.frame(na.omit(cbind(values(socseq_italy), values(predictors))))
+colnames(data_values)[1] <- "socseq"
 
-# The resampling went well.
+#Rimuovo le righe con valori mancanti
+data_values <- na.omit(data_values)
 
-#raster of sequestered soc cropped for india
-raster_gsoc_seq_bau <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_T0_Map030.tif")
-seq_bau<-crop(raster_gsoc_seq_bau, ext)
-print(seq_bau)
-plot(seq_bau)
+#Suddivido i dati in training e testing
+set.seed(123)
+train_index <- createDataPartition(data_values$socseq, p = 0.8, list = FALSE)
+train_data <- data_values[train_index, ]
+test_data <- data_values[-train_index, ]
 
-#download and crop the SOC proiection for the BAU scenario
-raster_final_soc_bau <- rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_finalSOC_BAU_Map030.tif")
-bau<-crop(raster_final_soc_bau, ext)
-print(bau)
-plot(bau)
+#Costruisco il modello GLM
+glm_model <- glm(socseq ~ ., data = train_data, family = gaussian())
+summary(glm_model)
 
-#download and crop the SOC proiection for the ssm1 scenario, or low carbon inputs (5%) in a sustainable management soil scenario
-raster_final_soc_ssm1<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_finalSOC_SSM1_Map030.tif")
-ssm1<-crop(raster_final_soc_ssm1, ext)
-print(ssm1)
-plot(ssm1)
+#Predico sui dati di test
+predictions <- predict(glm_model, newdata = test_data)
 
-#download and crop the SOC proiection for the ssm2 scenario, or medium carbon inputs (10%) 
-raster_final_soc_ssm2<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_RSR_SSM2_Map030.tif")
-ssm2<-crop(raster_final_soc_ssm2, ext)
-print(ssm2)
-plot(ssm2)
+#Valuto il modello
+rmse <- sqrt(mean((predictions - test_data$socseq)^2))
+r_squared <- 1 - sum((predictions - test_data$socseq)^2) / sum((mean(train_data$socseq) - test_data$socseq)^2)
 
-#download and crop the SOC proiection for the ssm1 scenario, or high carbon inputs (20%) 
-raster_final_soc_ssm3<-rast("/Users/Cat/Desktop/SPATIALECOLOGY/GSOCseq_RSR_SSM3_Map030.tif")
-ssm3<-crop(raster_final_soc_ssm3, ext)
-print(ssm3)
-plot(ssm3)
+#Visualizzo i risultati
+cat("RMSE:", rmse, "\n")
+cat("R-squared:", r_squared, "\n")
 
-#%%%%% I want to evaluate area at desertification risk, so i evaluate the absolute and relative variation
-# in initial and final SOC
-delta_bau <- bau - indiasoc19
-delta_perc_bau <- ((bau - indiasoc19) / indiasoc19) * 100
-delta_ssm1 <- ssm1 - indiasoc19
-delta_perc_ssm1 <- ((ssm1 - indiasoc19) / indiasoc19) * 100
-delta_ssm2 <- ssm2 - indiasoc19
-delta_perc_ssm2 <- ((ssm2 - indiasoc19) / indiasoc19) * 100
-delta_ssm3 <- ssm3 - indiasoc19
-delta_perc_ssm3 <- ((ssm3 - indiasoc19) / indiasoc19) * 100
+#Predizione spaziale
+socseq_prediction <- predict(predictors, glm_model, type = "response")
+writeRaster(socseq_prediction, "output/socseq_prediction_2019.tif", overwrite = TRUE)
 
-#I plot variation to gain information on the area with the loss of SOC greater than the 10% for the BAU and for ssm1,ssm2 and ssm3
-plot(delta_perc_bau, main = "Δ% SOC - Scenario BAU", col = terrain.colors(20))
-plot(delta_perc_bau < -10, main = "Aree con perdita >10% - BAU", col = c("white", "red"))
+#Visualizzo la mappa predetta
+plot(socseq_prediction, main = "Predizione SOCseq 2019")
 
-plot(delta_perc_ssm1, main = "Δ% SOC - Scenario ssm1", col = terrain.colors(20))
-plot(delta_perc_ssm1 < -10, main = "Aree con perdita >10% - ssm1", col = c("white", "red"))
+#####Visualizzo i residui
+residuals <- residuals(glm_model)
+hist(residuals, 
+     main = "Distribuzione dei Residui", 
+     xlab = "Residui", 
+     breaks = 50, 
+     col = "lightblue", 
+     border = "white")
 
-plot(delta_perc_ssm2, main = "Δ% SOC - Scenario ssm2", col = terrain.colors(20))
-plot(delta_perc_ssm2 < -10, main = "Aree con perdita >10% - ssm2", col = c("white", "red"))
+#Predizione su raster stack 
+soc_pred_2019 <- predict(predictors, glm_model)
+plot(soc_pred_2019, main = "SOC Predetto 2019")
 
-plot(delta_perc_ssm3, main = "Δ% SOC - Scenario ssm3", col = terrain.colors(20))
-plot(delta_perc_ssm3 < -10, main = "Aree con perdita >10% - ssm3", col = c("white", "red"))
+####Confronto con FAO
+soc_fao <- socseq_italy
+diff_map <- soc_pred_2019 - soc_fao
+plot(diff_map, main = "Differenza SOC predetto - FAO 2019")
+writeRaster(soc_pred_2019, "output/soc_pred_2019.tif", overwrite = TRUE)
+writeRaster(diff_map, "output/soc_diff_vs_fao.tif", overwrite = TRUE)
 
-#
+#Mappa FAO GSOC sequestrato scenario BAU 2040
+fao_prediction_raster <- rast("data/scenari/GSOCseq_finalSOC_BAU_Map030.tif")
+fao_prediction_raster <- project(fao_prediction_raster, crs(soc_pred_2019))
+fao_prediction_raster <- crop(fao_prediction_raster, soc_pred_2019)
+fao_prediction_raster <- mask(fao_prediction_raster, soc_pred_2019)
+#Resample FAO sulla griglia di glm
+fao_aligned <- resample(fao_prediction_raster, soc_pred_2019, method = "bilinear")
+
+#Stack e valori come data frame
+comparison_stack <- c(soc_pred_2019, fao_aligned)
+names(comparison_stack) <- c("glm", "fao")
+comparison_df <- as.data.frame(comparison_stack, na.rm = TRUE)
+
+#####STATISTICA
+#Correlazione Pearson
+correlation <- cor(comparison_df$glm, comparison_df$fao)
+cat("Correlazione Pearson tra GLM e FAO (BAU):", round(correlation, 3), "\n")
+
+#Errore assoluto medio
+mae <- mean(abs(comparison_df$glm - comparison_df$fao))
+cat("Errore Assoluto Medio (MAE):", round(mae, 3), "\n")
+
+#Errore quadratico medio
+rmse <- sqrt(mean((comparison_df$glm - comparison_df$fao)^2))
+cat("Errore Quadratico Medio (RMSE):", round(rmse, 3), "\n")
+
+
+
+
