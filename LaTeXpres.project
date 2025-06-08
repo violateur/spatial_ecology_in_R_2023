@@ -112,27 +112,27 @@
 
 \begin{frame}
  \begin{table}[ht]
-\centering
-\caption{Summary statistics for GSOC and HWSD}
-\begin{tabular}{lrrrrrr}
-\toprule
-\textbf{Statistic} & \textbf{Min.} & \textbf{1st Qu.} & \textbf{Median} & \textbf{Mean} & \textbf{3rd Qu.} & \textbf{Max.} \\
-\midrule
-\textbf{GSOC} & 0.00 & 44.38 & 55.57 & 58.49 & 69.89 & 590.75 \\
-\textbf{HWSD} & 2.363 & 21.249 & 25.110 & 27.993 & 30.634 & 115.449 \\
-\bottomrule
-\end{tabular}
-\label{tab:soc_summary}
-\end{table}
+  \centering
+  \caption{Summary statistics for GSOC and HWSD}
+  \begin{tabular}{lrrrrrr}
+    \toprule
+    \textbf{Statistic} & \textbf{Min.} & \textbf{1st Qu.} & \textbf{Median} & \textbf{Mean} & \textbf{3rd Qu.} & \textbf{Max.} \\
+    \midrule
+    \textbf{GSOC} & 0.00 & 44.38 & 55.57 & 58.49 & 69.89 & 590.75 \\
+    \textbf{HWSD} & 2.363 & 21.249 & 25.110 & 27.993 & 30.634 & 115.449 \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:soc_summary}
+  \end{table}
 GSOC has got a higher variability and high values. This is coherent with a higher sensitivity of the approach. 
 \end{frame}
 
 \begin{frame}{SOC content for Italy in the two datasets}
-\begin{center}
-\includegraphics[width=0.65\textwidth]{SOC HWSD ok.png}%
-\hfill
-\includegraphics[width=0.65\textwidth]{GSOC SOC ok.png}
-\end{center}
+  \begin{center}
+    \includegraphics[width=0.65\textwidth]{SOC HWSD ok.png}%
+  \hfill
+    \includegraphics[width=0.65\textwidth]{GSOC SOC ok.png}
+  \end{center}
 \end{frame}
 
 
@@ -147,8 +147,8 @@ GSOC has got a higher variability and high values. This is coherent with a highe
 
 \begin{frame}{Aim of the Study}
     \begin{itemize}
-    \item Comparison of GLM predictions from two datasets for SOC 
-    \item Comparison of GLM predictions from the two datasets with the prediction of SOC stock for the BAU scenario from FAO GSOC made with RothC
+      \item Comparison of GLM predictions from two datasets for SOC 
+      \item Comparison of GLM predictions from the two datasets with the prediction of SOC stock for the BAU scenario from FAO GSOC made with RothC
     \end{itemize}
 \end{frame}
 
@@ -160,16 +160,14 @@ GSOC has got a higher variability and high values. This is coherent with a highe
     \item Crop and mask to national boundary, \textit{gadm} function from \textit{geodata} package at country level.
     \item Calculation of mean SOC in $t/ha_{eq}$ to 30 $cm$ depth from HWSD.
     \[
-\text{SOC}_{\text{t/ha}} = \left( \frac{\%\text{C}}{100} \right) \times \rho_{\text{bulk}} \times d \times 10
-\]
-
-\begin{itemize}
-  \item $\%\text{C}$ = percentuale di carbonio organico nel suolo
-  \item $\rho_{\text{bulk}}$ = densità apparente del suolo (g/cm\textsuperscript{3})
-  \item $d$ = spessore dello strato di suolo (cm)
-  \item $10$ = fattore di conversione per ottenere il contenuto in t/ha
-\end{itemize}
-
+    \text{SOC}_{\text{t/ha}} = \left( \frac{\%\text{C}}{100} \right) \times \rho_{\text{bulk}} \times d \times 10
+    \]
+    \begin{itemize}
+      \item $\%\text{C}$ = percentuale di carbonio organico nel suolo
+      \item $\rho_{\text{bulk}}$ = densità apparente del suolo (g/cm\textsuperscript{3})
+      \item $d$ = spessore dello strato di suolo (cm)
+      \item $10$ = fattore di conversione per ottenere il contenuto in t/ha
+    \end{itemize}
     \item Extraction of climate and NDVI values at sample points.
   \end{itemize}
 \end{frame}
@@ -215,32 +213,32 @@ GSOC has got a higher variability and high values. This is coherent with a highe
 
 \begin{frame}{Statistics of residuals}
     \begin{table}[H]
-\centering
-\caption{Residuals distribution for the two GLM models}
-\begin{tabular}{lrrrrrr}
-\toprule
-\textbf{Model} & \textbf{Min} & \textbf{1° Qu.} & \textbf{Median} & \textbf{Mean} & \textbf{3° Qu.} & \textbf{Max} \\
-\midrule
-\textbf{GSOC} & -123.32 & -9.48 & -1.28 & 0.00 & 7.62 & 244.79 \\
-\textbf{HWSD} & -34.59 & -6.79 & -1.86 & 0.00 & 3.92 & 91.35 \\
-\bottomrule
-\end{tabular}
-\label{tab:residui_generali}
-\end{table}
+    \centering
+    \caption{Residuals distribution for the two GLM models}
+    \begin{tabular}{lrrrrrr}
+      \toprule
+      \textbf{Model} & \textbf{Min} & \textbf{1° Qu.} & \textbf{Median} & \textbf{Mean} & \textbf{3° Qu.} & \textbf{Max} \\
+      \midrule
+      \textbf{GSOC} & -123.32 & -9.48 & -1.28 & 0.00 & 7.62 & 244.79 \\
+      \textbf{HWSD} & -34.59 & -6.79 & -1.86 & 0.00 & 3.92 & 91.35 \\
+      \bottomrule
+    \end{tabular}
+    \label{tab:residui_generali}
+    \end{table}
 
-\begin{table}[H]
-\centering
-\caption{Standard deviation and variance of residuals}
-\begin{tabular}{lrr}
-\toprule
-\textbf{Modello} & \textbf{Standard dev.} & \textbf{Variance} \\
-\midrule
-\textbf{GSOC} & 14.53 & 211.14 \\
-\textbf{HWSD} & 10.24 & 104.83 \\
-\bottomrule
-\end{tabular}
-\label{tab:devstd_var}
-\end{table}
+    \begin{table}[H]
+    \centering
+    \caption{Standard deviation and variance of residuals}
+    \begin{tabular}{lrr}
+      \toprule
+      \textbf{Modello} & \textbf{Standard dev.} & \textbf{Variance} \\
+      \midrule
+      \textbf{GSOC} & 14.53 & 211.14 \\
+      \textbf{HWSD} & 10.24 & 104.83 \\
+      \bottomrule
+    \end{tabular}
+    \label{tab:devstd_var}
+    \end{table}
 \end{frame}
 
 \begin{frame}{Residuals}
@@ -255,9 +253,7 @@ GSOC has got a higher variability and high values. This is coherent with a highe
     \vspace{0pt} % Align top
     \begin{itemize}
       \item Table~\ref{tab:residui_generali} shows the main descriptors of the residuals' distribution for the two GLM models: minimum, first quartile, median, third quartile, and maximum. The mean = 0 indicates that there is no global systematic bias in either model.
-      
       \item The larger dispersion in GSOC suggests the presence of more extreme values (outliers), while its distribution appears more symmetric compared to HWSD.
-      
       \item Table~\ref{tab:devstd_var} confirms that the standard deviation is higher in GSOC.
     \end{itemize}
 \end{minipage}
@@ -292,19 +288,18 @@ GSOC has got a higher variability and high values. This is coherent with a highe
     \item HWSD predictions show coefficient of correlation, so the spatial distributions are similar. 
     \item GSOC has got smaller MAE and RMSE, so it is closer to BAU scenario's values.
     \item Hypothesis for the Pearson results: both HWSD and FAO BAU scenario datasets are made by models (RothC and harmonization), so they can follow the same spatial patterns. 
-    \begin{table}[H]
-\centering
-\label{tab:glm_fao_comparison}
-\begin{tabular}{lccc}
-\toprule
-\textbf{Model} & \textbf{Pearson correlation} & \textbf{MAE} & \textbf{RMSE} \\
-\midrule
-GLM su \textbf{GSOC} & 0.777 & 18.242 & 20.182 \\
-GLM su \textbf{HWSD}    & 0.804 & 58.085 & 63.293 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
+      \begin{table}[H]
+      \centering
+      \label{tab:glm_fao_comparison}
+      \begin{tabular}{lccc}
+        \toprule
+        \textbf{Model} & \textbf{Pearson correlation} & \textbf{MAE} & \textbf{RMSE} \\
+        \midrule
+        GLM su \textbf{GSOC} & 0.777 & 18.242 & 20.182 \\
+        GLM su \textbf{HWSD}    & 0.804 & 58.085 & 63.293 \\
+        \bottomrule
+      \end{tabular}
+      \end{table}
   \end{itemize}
 \end{frame}
 
