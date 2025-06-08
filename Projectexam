@@ -1,0 +1,307 @@
+# Installazione dei pacchetti necessari
+install.packages(c("terra", "sf", "dplyr", "ggplot2", "caret", "raster", "sp","caret","devtools"))
+devtools::install_github("rspatial/geodata")
+
+# Caricamento dei pacchetti
+library(terra)
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(raster)
+library(sp)
+library(geodata)
+library(caret)
+
+#wd
+setwd("/Users/Cat/Desktop/SPATIALECOLOGY")
+
+###GSOC 
+#Raster SOC 2019 GSOCmap FAO
+socfao_2019 <- rast("data/scenari/GSOCmap1.5.0 copia.tif")
+
+#Estensione dell'Italia. Scarico l'Italia (livello 0 = nazionale)
+italy_vect <- geodata::gadm(country = "ITA", level = 0, path = "data/")
+italy_vect_proj <- project(italy_vect, crs(socfao_2019))
+
+#Raster soc 2019 for Italy (crop and mask)
+socfao_italy <- crop(socfao_2019, italy_vect_proj)    
+socfao_italy <- mask(socfao_italy, italy_vect_proj)  
+plot(socfao_italy, main = "GSOC SOC t/ha 0-30 cm Italy")
+
+###HWSD
+#Leggo il CSV dei layer HWSD
+hwds_layers <- read.csv("data/HWSD2/hwds_layers.csv", stringsAsFactors = FALSE)
+hwds_layers <- hwds_layers[!is.na(hwds_layers$ORG_CARBON) & !is.na(hwds_layers$TOPDEP) & !is.na(hwds_layers$BOTDEP), ]
+str(hwds_layers)
+summary(hwds_layers$ORG_CARBON)
+#pulisco. ci sono valori negativi??? 
+hwds_layers <- hwds_layers %>%
+  filter(ORG_CARBON >= 0 & BULK > 0)
+
+#Converto da % in t/ha, prendo i primi 30 cm di suolo, 
+hwds_layers <- hwds_layers %>%
+  filter(ORG_CARBON >= 0, BULK > 0, TOPDEP < 30) %>%
+  mutate(
+    LAYER_THICKNESS = pmin(BOTDEP, 30) - TOPDEP,
+    SOC_t_ha = (ORG_CARBON / 100) * BULK * LAYER_THICKNESS * 10  # t/ha per ogni layer
+  )
+
+#Aggrego il SOC totale per ogni SMU (HWSD2_SMU_ID)
+soc_mass_0_30 <- hwds_layers %>%
+  group_by(HWSD2_SMU_ID) %>%
+  summarise(SOC_t_ha_0_30 = sum(SOC_t_ha), .groups = "drop")
+
+#Estraggo il raster dei SMU ID e i valori per cella
+hwds_raster <- rast("data/HWSD2/HWSD2.bil")
+hwds_italy <- crop(hwds_raster, italy_vect_proj)
+hwds_italy <- mask(hwds_italy, italy_vect_proj)
+ids_vec <- values(hwds_italy)
+
+#Associo il SOC per SMU_ID a ogni cella
+soc_eq_vec <- rep(NA, length(ids_vec))
+match_idx <- match(ids_vec, soc_mass_0_30$HWSD2_SMU_ID)
+soc_eq_vec[!is.na(match_idx)] <- soc_mass_0_30$SOC_t_ha_0_30[match_idx[!is.na(match_idx)]]
+
+#Costruisco il nuovo raster con i valori SOC per cella
+sochwds_italy <- hwds_italy
+values(sochwds_italy) <- soc_eq_vec
+
+# Mappa finale
+plot(sochwds_italy, main = "SOC HWSD t/ha 0–30 cm Italy", col = terrain.colors(50))
+
+
+###Uso suolo
+#Raster uso suolo Italia
+layers <- st_layers("data/usosuoloitalia.gdb")
+print(layers)
+usosuolo_vector <- st_read("data/usosuoloitalia.gdb", layer = "U2018_CLC2018_V2020_20u1")
+usosuolo_vect <- vect(usosuolo_vector)
+usosuolo_vect <- project(usosuolo_vect, crs(socfao_italy))
+usosuolo_italy <- rasterize(usosuolo_vect, socfao_italy, field = "Code_18")
+
+
+#Converto usosuolo raster in numeric 
+if (is.factor(usosuolo_italy)) {
+  vals <- as.numeric(as.character(values(usosuolo_italy)))
+  usosuolo_num <- rast(usosuolo_italy)
+  values(usosuolo_num) <- vals
+  usosuolo_italy <- usosuolo_num
+}
+is.factor(usosuolo_italy)
+
+###Dati bioclimatici e NDVI
+#Tasmin da lista a unico raster e media (da usare come predictor su glm)
+files_tasmin <- list.files("data/tasmin", pattern = "\\.tif$", full.names = TRUE)
+tasmin_stack <- rast(files_tasmin) #Carico tutti i raster in uno stack
+print(tasmin_stack) #Controllo la dimensione e se serve allineare raster (devono avere stessa estensione e risoluzione)
+tasmin_mean <- mean(tasmin_stack, na.rm = TRUE) #Creo raster aggregato (media annuale)
+
+#Tasmax "" "" 
+files_tasmax <- list.files("data/tasmax", pattern = "\\.tif$", full.names = TRUE)
+tasmax_stack <- rast(files_tasmax)
+tasmax_mean <- mean(tasmax_stack, na.rm = TRUE)
+
+#Precip "" "" 
+files_precip <- list.files("data/precipitation", pattern = "\\.tif$", full.names = TRUE)
+precip_stack <- rast(files_precip)
+precip_sum <- sum(precip_stack, na.rm = TRUE)  
+
+#NDVI "" "" 
+files_ndvi <- list.files("data/ndvi_italia", pattern = "\\.tif$", full.names = TRUE)
+ndvi_stack <- rast(files_ndvi)
+ndvi_mean <- mean(ndvi_stack, na.rm = TRUE)
+
+#Resamplo tutti i raster media a socseq_italy 
+ndvi_italy <- resample(ndvi_mean, socfao_italy, method = "bilinear")
+tasmin_italy <- resample(tasmin_mean, socfao_italy, method = "bilinear")
+tasmax_italy <- resample(tasmax_mean, socfao_italy, method = "bilinear")
+precip_italy <- resample(precip_sum, socfao_italy, method = "bilinear")
+
+###Controlli 
+#Risoluzione, dimensione e extent
+compareGeom(socfao_italy, sochwds_italy, tasmin_italy, tasmax_italy, precip_italy, ndvi_italy, usosuolo_italy, stopOnError = FALSE)
+
+#Chi e quanti Nan
+rasters <- list(
+  socfao_italy = socfao_italy, #79%
+  sochwds_italy = sochwds_italy, #76%
+  usosuolo_italy = usosuolo_italy, #76%
+  tasmin_italy = tasmin_italy, #0
+  tasmax_italy = tasmax_italy, #0
+  precip_italy = precip_italy, #0
+  ndvi_italy = ndvi_italy #76%
+)
+
+for (name in names(rasters)) {
+  r <- rasters[[name]]
+  total <- ncell(r)
+  na_count <- global(is.na(r), "sum", na.rm = FALSE)[1,1]
+  cat(sprintf("%s: NA = %d / %d (%.2f%%)\n", name, na_count, total, 100 * na_count / total))
+}
+
+#Creo lo stack dei predittori
+predictors <- c(usosuolo_italy, tasmin_italy, tasmax_italy, precip_italy, ndvi_italy)
+names(predictors) <- c("usosuolo", "tasmin", "tasmax", "precipitation", "ndvi")
+
+#Estraggo i valori dei predittori e del GSOC FAO
+data_gsoc <- as.data.frame(na.omit(cbind(values(socfao_italy), values(predictors))))
+colnames(data_gsoc)[1] <- "faosoc"
+data_gsoc <- na.omit(data_gsoc)
+
+#Estraggo i valori dei predittori e del soc hwsd
+data_hwds <- as.data.frame(na.omit(cbind(values(sochwds_italy), values(predictors))))
+colnames(data_hwds)[1] <- "hwsdsoc"
+data_hwds <- na.omit(data_hwds)
+
+summary(data_gsoc$faosoc)
+summary(data_hwds$hwsdsoc)
+
+#Suddivido i dati in training e testing e costruisco GLM GSOC
+set.seed(123)
+train_index_gsoc <- createDataPartition(data_gsoc$faosoc, p = 0.8, list = FALSE)
+train_data_gsoc <- data_gsoc[train_index_gsoc, ]
+test_data_gsoc <- data_gsoc[-train_index_gsoc, ]
+
+glm_gsoc <- glm(faosoc ~ ., data = train_data_gsoc, family = gaussian())
+summary(glm_gsoc)
+length(test_data_gsoc$faosoc) 
+
+#Suddivido i dati in training e testing e costruisco GLM hwsd 
+set.seed(123)
+train_index_hwds <- createDataPartition(data_hwds$hwsdsoc, p = 0.8, list = FALSE)
+train_data_hwds <- data_hwds[train_index_hwds, ]
+test_data_hwds <- data_hwds[-train_index_hwds, ]
+
+glm_hwds <- glm(hwsdsoc ~ ., data = train_data_hwds, family = gaussian())
+summary(glm_hwds)
+length(test_data_hwds$hwsdsoc)
+
+#Predico sui dati di test GSOCe valuto il modello GLM GSOC con R2 e RMSE
+pred_gsoc <- predict(glm_gsoc, newdata = test_data_gsoc)
+rmse_gsoc <- sqrt(mean((pred_gsoc - test_data_gsoc$faosoc)^2))
+r2_gsoc <- 1 - sum((pred_gsoc - test_data_gsoc$faosoc)^2) / sum((mean(train_data_gsoc$faosoc) - test_data_gsoc$faosoc)^2)
+#Visualizzo i risultati GLM GSOC
+cat("GSOCmap GLM - RMSE:", rmse_gsoc, "\n")
+cat("GSOCmap GLM - R-squared:", r2_gsoc, "\n")
+
+#Predico sui dati di test hwsd e valuto il modello GLM hwsd con R2 e RMSE
+pred_hwds <- predict(glm_hwds, newdata = test_data_hwds)
+rmse_hwds <- sqrt(mean((pred_hwds - test_data_hwds$hwsdsoc)^2))
+r2_hwds <- 1 - sum((pred_hwds - test_data_hwds$hwsdsoc)^2) / sum((mean(train_data_hwds$hwsdsoc) - test_data_hwds$hwsdsoc)^2)
+#Visualizzo i risultati GLM hwsd
+cat("HWSD GLM - RMSE:", rmse_hwds, "\n")
+cat("HWSD GLM - R^2:", r2_hwds, "\n")
+
+#Predizione spaziale GSOCmap
+soc_pred_gsoc <- predict(predictors, glm_gsoc, type = "response")
+plot(soc_pred_gsoc, main = "Prediction SOC GSOC")
+
+#Predizione spaziale HWSD
+soc_pred_hwds <- predict(predictors, glm_hwds, type = "response")
+plot(soc_pred_hwds, main = "Prediction SOC HWSD")
+
+#Confronto predizioni
+comparison_stack <- c(soc_pred_gsoc, soc_pred_hwds)
+names(comparison_stack) <- c("GSOCpredictions", "HWSDpredictions")
+plot(comparison_stack)
+comparison_df <- as.data.frame(comparison_stack, na.rm = TRUE)
+
+correlation <- cor(comparison_df$GSOCpredictions, comparison_df$HWSDpredictions)
+rmse_comp <- sqrt(mean((comparison_df$GSOCpredictions - comparison_df$HWSDpredictions)^2))
+mae_comp <- mean(abs(comparison_df$GSOCpredictions - comparison_df$HWSDpredictions))
+
+cat("Correlation in prediction GSOCmap vs HWSD:", round(correlation, 3), "\n")
+cat("RMSE predictions GSOCmap vs HWSD:", round(rmse_comp, 3), "\n")
+cat("MAE predictions GSOCmap vs HWSD:", round(mae_comp, 3), "\n")
+
+plot(soc_pred_gsoc - soc_pred_hwds, main = "Difference in predictions GSOCmap - HWSD", col = terrain.colors(50))
+plot(comparison_stack)
+
+
+###Visualizzo i residui
+residuals <- residuals(glm_gsoc)
+hist(residuals, 
+     main = "Residuals Distribution GSOC", 
+     xlab = "Residuals", 
+     breaks = 50, 
+     col = "lightblue", 
+     border = "white")
+
+residuals <- residuals(glm_hwds)
+hist(residuals, 
+     main = "Residuals Distribution HWSD", 
+     xlab = "Residuals", 
+     breaks = 50, 
+     col = "lightblue", 
+     border = "white")
+
+#Per GSOC
+residuals_gsoc <- residuals(glm_gsoc)
+summary(residuals_gsoc)
+quantile(residuals_gsoc, probs = seq(0, 1, 0.1))
+
+#Per HWSD
+residuals_hwds <- residuals(glm_hwds)
+summary(residuals_hwds)
+quantile(residuals_hwds, probs = seq(0, 1, 0.1))
+
+#Errori
+sd(residuals_gsoc)
+sd(residuals_hwds)
+
+var(residuals_gsoc)
+var(residuals_hwds)
+
+#Mappa FAO GSOC sequestrato scenario BAU 2040
+fao_prediction_raster <- rast("data/scenari/GSOCseq_finalSOC_BAU_Map030.tif")
+fao_prediction_raster <- project(fao_prediction_raster, crs(italy_vect_proj))
+fao_prediction_raster <- crop(fao_prediction_raster, italy_vect_proj)
+fao_prediction_raster <- mask(fao_prediction_raster, italy_vect_proj)
+plot(fao_prediction_raster)
+
+###FAO vs GSOC GLM
+#Resample FAO sulla griglia di gsoc glm
+fao_aligned_gsoc <- resample(fao_prediction_raster, soc_pred_gsoc, method = "bilinear")
+
+#Stack e valori come data frame
+comparison_stack_gsoc <- c(soc_pred_gsoc, fao_aligned_gsoc)
+names(comparison_stack_gsoc) <- c("glm", "fao")
+comparison_gsoc_df <- as.data.frame(comparison_stack_gsoc, na.rm = TRUE)
+
+#####STATISTICA
+#Correlazione Pearson
+correlationgsoc <- cor(comparison_gsoc_df$glm, comparison_gsoc_df$fao)
+cat("Pearson correlation between GLM e FAO (BAU):", round(correlationgsoc, 3), "\n")
+
+#Errore assoluto medio
+maeg <- mean(abs(comparison_gsoc_df$glm - comparison_gsoc_df$fao))
+cat("Errore Assoluto Medio (MAE):", round(maeg, 3), "\n")
+
+#Errore quadratico medio
+rmseg <- sqrt(mean((comparison_gsoc_df$glm - comparison_gsoc_df$fao)^2))
+cat("Errore Quadratico Medio (RMSE):", round(rmseg, 3), "\n")
+
+#FAO VS HWSD GLM
+#Resample FAO sulla griglia di glm
+fao_aligned_hwsd <- resample(fao_prediction_raster, soc_pred_hwds, method = "bilinear")
+
+#Stack e valori come data frame
+comparison_stack_hwsd <- c(soc_pred_hwds, fao_aligned)
+names(comparison_stack_hwsd) <- c("glm", "fao")
+comparison_hwsd_df <- as.data.frame(comparison_stack_hwsd, na.rm = TRUE)
+
+#####STATISTICA
+#Correlazione Pearson
+correlationhwsd <- cor(comparison_hwsd_df$glm, comparison_hwsd_df$fao)
+cat("Correlazione Pearson tra GLM e HWSD:", round(correlationhwsd, 3), "\n")
+
+#Errore assoluto medio
+maeh <- mean(abs(comparison_hwsd_df$glm - comparison_hwsd_df$fao))
+cat("Errore Assoluto Medio (MAE):", round(maeh, 3), "\n")
+
+#Errore quadratico medio
+rmseh <- sqrt(mean((comparison_hwsd_df$glm - comparison_hwsd_df$fao)^2))
+cat("Errore Quadratico Medio (RMSE):", round(rmseh, 3), "\n")
+
+
+
