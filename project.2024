@@ -1,5 +1,5 @@
 # Installazione dei pacchetti necessari
-install.packages(c("terra", "sf", "dplyr", "caret", "caret","devtools", "viridis"))
+install.packages(c("terra", "sf", "dplyr", "caret","devtools", "viridis"))
 devtools::install_github("rspatial/geodata")
 # Caricamento dei pacchetti
 library(terra)
