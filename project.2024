@@ -1,13 +1,10 @@
 # Installazione dei pacchetti necessari
-install.packages(c("terra", "sf", "dplyr", "ggplot2", "caret", "raster", "sp","caret","devtools", "viridis"))
+install.packages(c("terra", "sf", "dplyr", "caret", "sp","caret","devtools", "viridis"))
 devtools::install_github("rspatial/geodata")
-install.packages("viridis")
 # Caricamento dei pacchetti
 library(terra)
 library(sf)
 library(dplyr)
-library(ggplot2)
-library(raster)
 library(sp)
 library(geodata)
 library(caret)
@@ -26,7 +23,6 @@ italy_vect_proj <- project(italy_vect, crs(socfao_2019))
 #Raster soc 2019 for Italy (crop and mask)
 socfao_italy <- crop(socfao_2019, italy_vect_proj)    
 socfao_italy <- mask(socfao_italy, italy_vect_proj)  
-plot(socfao_italy, main = "GSOC SOC t/ha 0-30 cm Italy", color = viridis (50))
 
 ###HWSD
 #Leggo il CSV dei layer HWSD
@@ -67,8 +63,6 @@ sochwds_italy <- hwds_italy
 values(sochwds_italy) <- soc_eq_vec
 
 # Mappa finale
-plot(sochwds_italy, main = "SOC HWSD t/ha 0–30 cm Italy", col = viridis(50))
-
 par(mfrow = c(1,2))
 plot(socfao_italy, main = "GSOC SOC t/ha 0-30 cm Italy", color = viridis (50))
 plot(sochwds_italy, main = "SOC HWSD t/ha 0–30 cm Italy", col = viridis(50))
