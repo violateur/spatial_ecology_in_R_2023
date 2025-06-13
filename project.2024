@@ -1,11 +1,10 @@
 # Installazione dei pacchetti necessari
-install.packages(c("terra", "sf", "dplyr", "caret", "sp","caret","devtools", "viridis"))
+install.packages(c("terra", "sf", "dplyr", "caret", "caret","devtools", "viridis"))
 devtools::install_github("rspatial/geodata")
 # Caricamento dei pacchetti
 library(terra)
 library(sf)
 library(dplyr)
-library(sp)
 library(geodata)
 library(caret)
 library(viridis)
@@ -27,7 +26,7 @@ socfao_italy <- mask(socfao_italy, italy_vect_proj)
 ###HWSD
 #Leggo il CSV dei layer HWSD
 hwds_layers <- read.csv("data/HWSD2/hwds_layers.csv", stringsAsFactors = FALSE)
-hwds_layers <- hwds_layers[!is.na(hwds_layers$ORG_CARBON) & !is.na(hwds_layers$TOPDEP) & !is.na(hwds_layers$BOTDEP), ]
+
 str(hwds_layers)
 summary(hwds_layers$ORG_CARBON)
 #pulisco. ci sono valori negativi??? 
@@ -36,7 +35,8 @@ hwds_layers <- hwds_layers %>%
 
 #Converto da % in t/ha, prendo i primi 30 cm di suolo, 
 hwds_layers <- hwds_layers %>%
-  filter(ORG_CARBON >= 0, BULK > 0, TOPDEP < 30) %>%
+  filter(!is.na(hwds_layers$ORG_CARBON) & !is.na(hwds_layers$TOPDEP) & !is.na(hwds_layers$BOTDEP), %>%
+    ORG_CARBON >= 0, BULK > 0, TOPDEP < 30) %>%
   mutate(
     LAYER_THICKNESS = pmin(BOTDEP, 30) - TOPDEP,
     SOC_t_ha = (ORG_CARBON / 100) * BULK * LAYER_THICKNESS * 10  # t/ha per ogni layer
@@ -76,14 +76,9 @@ usosuolo_vect <- vect(usosuolo_vector)
 usosuolo_vect <- project(usosuolo_vect, crs(socfao_italy))
 usosuolo_italy <- rasterize(usosuolo_vect, socfao_italy, field = "Code_18")
 
-
+class(usosuolo_italy)
 #Converto usosuolo raster in numeric 
-if (is.factor(usosuolo_italy)) {
-  vals <- as.numeric(as.character(values(usosuolo_italy)))
-  usosuolo_num <- rast(usosuolo_italy)
-  values(usosuolo_num) <- vals
-  usosuolo_italy <- usosuolo_num
-}
+usosuolo_italy <- as.numeric(usosuolo_italy)
 is.factor(usosuolo_italy)
 
 ###Dati bioclimatici e NDVI
@@ -216,16 +211,14 @@ plot(comparison_stack, color = viridis (40))
 
 
 ###Visualizzo i residui
-residuals <- residuals(glm_gsoc)
-hist(residuals, 
+hist(residuals(glm_gsoc), 
      main = "Residuals Distribution GSOC", 
      xlab = "Residuals", 
      breaks = 50, 
      col = "lightblue", 
      border = "white")
 
-residuals <- residuals(glm_hwds)
-hist(residuals, 
+hist(residuals(glm_hwds), 
      main = "Residuals Distribution HWSD", 
      xlab = "Residuals", 
      breaks = 50, 
@@ -283,7 +276,7 @@ cat("Errore Quadratico Medio (RMSE):", round(rmseg, 3), "\n")
 fao_aligned_hwsd <- resample(fao_prediction_raster, soc_pred_hwds, method = "bilinear")
 
 #Stack e valori come data frame
-comparison_stack_hwsd <- c(soc_pred_hwds, fao_aligned)
+comparison_stack_hwsd <- c(soc_pred_hwds, fao_aligned_hwsd)
 names(comparison_stack_hwsd) <- c("glm", "fao")
 comparison_hwsd_df <- as.data.frame(comparison_stack_hwsd, na.rm = TRUE)
 
