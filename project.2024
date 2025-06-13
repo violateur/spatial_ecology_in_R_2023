@@ -1,7 +1,7 @@
 # Installazione dei pacchetti necessari
-install.packages(c("terra", "sf", "dplyr", "ggplot2", "caret", "raster", "sp","caret","devtools"))
+install.packages(c("terra", "sf", "dplyr", "ggplot2", "caret", "raster", "sp","caret","devtools", "viridis"))
 devtools::install_github("rspatial/geodata")
-
+install.packages("viridis")
 # Caricamento dei pacchetti
 library(terra)
 library(sf)
@@ -11,7 +11,7 @@ library(raster)
 library(sp)
 library(geodata)
 library(caret)
-
+library(viridis)
 #wd
 setwd("/Users/Cat/Desktop/SPATIALECOLOGY")
 
@@ -26,7 +26,7 @@ italy_vect_proj <- project(italy_vect, crs(socfao_2019))
 #Raster soc 2019 for Italy (crop and mask)
 socfao_italy <- crop(socfao_2019, italy_vect_proj)    
 socfao_italy <- mask(socfao_italy, italy_vect_proj)  
-plot(socfao_italy, main = "GSOC SOC t/ha 0-30 cm Italy")
+plot(socfao_italy, main = "GSOC SOC t/ha 0-30 cm Italy", color = viridis (50))
 
 ###HWSD
 #Leggo il CSV dei layer HWSD
@@ -36,18 +36,20 @@ str(hwds_layers)
 summary(hwds_layers$ORG_CARBON)
 #pulisco. ci sono valori negativi??? 
 hwds_layers <- hwds_layers %>%
-filter(ORG_CARBON >= 0 & BULK > 0)
+  filter(ORG_CARBON >= 0 & BULK > 0)
 
 #Converto da % in t/ha, prendo i primi 30 cm di suolo, 
 hwds_layers <- hwds_layers %>%
-filter(ORG_CARBON >= 0, BULK > 0, TOPDEP < 30) %>%
-mutate(AYER_THICKNESS = pmin(BOTDEP, 30) - TOPDEP,
-SOC_t_ha = (ORG_CARBON / 100) * BULK * LAYER_THICKNESS * 10  # t/ha per ogni layer)
+  filter(ORG_CARBON >= 0, BULK > 0, TOPDEP < 30) %>%
+  mutate(
+    LAYER_THICKNESS = pmin(BOTDEP, 30) - TOPDEP,
+    SOC_t_ha = (ORG_CARBON / 100) * BULK * LAYER_THICKNESS * 10  # t/ha per ogni layer
+  )
 
 #Aggrego il SOC totale per ogni SMU (HWSD2_SMU_ID)
 soc_mass_0_30 <- hwds_layers %>%
-group_by(HWSD2_SMU_ID) %>%
-summarise(SOC_t_ha_0_30 = sum(SOC_t_ha), .groups = "drop")
+  group_by(HWSD2_SMU_ID) %>%
+  summarise(SOC_t_ha_0_30 = sum(SOC_t_ha), .groups = "drop")
 
 #Estraggo il raster dei SMU ID e i valori per cella
 hwds_raster <- rast("data/HWSD2/HWSD2.bil")
@@ -65,8 +67,11 @@ sochwds_italy <- hwds_italy
 values(sochwds_italy) <- soc_eq_vec
 
 # Mappa finale
-plot(sochwds_italy, main = "SOC HWSD t/ha 0–30 cm Italy", col = terrain.colors(50))
+plot(sochwds_italy, main = "SOC HWSD t/ha 0–30 cm Italy", col = viridis(50))
 
+par(mfrow = c(1,2))
+plot(socfao_italy, main = "GSOC SOC t/ha 0-30 cm Italy", color = viridis (50))
+plot(sochwds_italy, main = "SOC HWSD t/ha 0–30 cm Italy", col = viridis(50))
 
 ###Uso suolo
 #Raster uso suolo Italia
@@ -80,10 +85,11 @@ usosuolo_italy <- rasterize(usosuolo_vect, socfao_italy, field = "Code_18")
 
 #Converto usosuolo raster in numeric 
 if (is.factor(usosuolo_italy)) {
-vals <- as.numeric(as.character(values(usosuolo_italy)))
-usosuolo_num <- rast(usosuolo_italy)
-values(usosuolo_num) <- vals
-usosuolo_italy <- usosuolo_num}
+  vals <- as.numeric(as.character(values(usosuolo_italy)))
+  usosuolo_num <- rast(usosuolo_italy)
+  values(usosuolo_num) <- vals
+  usosuolo_italy <- usosuolo_num
+}
 is.factor(usosuolo_italy)
 
 ###Dati bioclimatici e NDVI
@@ -120,19 +126,21 @@ compareGeom(socfao_italy, sochwds_italy, tasmin_italy, tasmax_italy, precip_ital
 
 #Chi e quanti Nan
 rasters <- list(
-socfao_italy = socfao_italy, #79%
-sochwds_italy = sochwds_italy, #76%
-usosuolo_italy = usosuolo_italy, #76%
-tasmin_italy = tasmin_italy, #0
-tasmax_italy = tasmax_italy, #0
-precip_italy = precip_italy, #0
-ndvi_italy = ndvi_italy #76%)
+  socfao_italy = socfao_italy, #79%
+  sochwds_italy = sochwds_italy, #76%
+  usosuolo_italy = usosuolo_italy, #76%
+  tasmin_italy = tasmin_italy, #0
+  tasmax_italy = tasmax_italy, #0
+  precip_italy = precip_italy, #0
+  ndvi_italy = ndvi_italy #76%
+)
 
 for (name in names(rasters)) {
-r <- rasters[[name]]
-total <- ncell(r)
-na_count <- global(is.na(r), "sum", na.rm = FALSE)[1,1]
-cat(sprintf("%s: NA = %d / %d (%.2f%%)\n", name, na_count, total, 100 * na_count / total))}
+  r <- rasters[[name]]
+  total <- ncell(r)
+  na_count <- global(is.na(r), "sum", na.rm = FALSE)[1,1]
+  cat(sprintf("%s: NA = %d / %d (%.2f%%)\n", name, na_count, total, 100 * na_count / total))
+}
 
 #Creo lo stack dei predittori
 predictors <- c(usosuolo_italy, tasmin_italy, tasmax_italy, precip_italy, ndvi_italy)
@@ -189,16 +197,16 @@ cat("HWSD GLM - R^2:", r2_hwds, "\n")
 
 #Predizione spaziale GSOCmap
 soc_pred_gsoc <- predict(predictors, glm_gsoc, type = "response")
-plot(soc_pred_gsoc, main = "Prediction SOC GSOC")
+plot(soc_pred_gsoc, main = "Prediction SOC GSOC", color = viridis (50))
 
 #Predizione spaziale HWSD
 soc_pred_hwds <- predict(predictors, glm_hwds, type = "response")
-plot(soc_pred_hwds, main = "Prediction SOC HWSD")
+plot(soc_pred_hwds, main = "Prediction SOC HWSD", color = viridis (50))
 
 #Confronto predizioni
 comparison_stack <- c(soc_pred_gsoc, soc_pred_hwds)
 names(comparison_stack) <- c("GSOCpredictions", "HWSDpredictions")
-plot(comparison_stack)
+plot(comparison_stack, color = viridis (40))
 comparison_df <- as.data.frame(comparison_stack, na.rm = TRUE)
 
 correlation <- cor(comparison_df$GSOCpredictions, comparison_df$HWSDpredictions)
@@ -210,25 +218,25 @@ cat("RMSE predictions GSOCmap vs HWSD:", round(rmse_comp, 3), "\n")
 cat("MAE predictions GSOCmap vs HWSD:", round(mae_comp, 3), "\n")
 
 plot(soc_pred_gsoc - soc_pred_hwds, main = "Difference in predictions GSOCmap - HWSD", col = terrain.colors(50))
-plot(comparison_stack)
+plot(comparison_stack, color = viridis (40))
 
 
 ###Visualizzo i residui
 residuals <- residuals(glm_gsoc)
 hist(residuals, 
-main = "Residuals Distribution GSOC", 
-xlab = "Residuals", 
-breaks = 50, 
-col = "lightblue", 
-border = "white")
+     main = "Residuals Distribution GSOC", 
+     xlab = "Residuals", 
+     breaks = 50, 
+     col = "lightblue", 
+     border = "white")
 
 residuals <- residuals(glm_hwds)
 hist(residuals, 
-main = "Residuals Distribution HWSD", 
-xlab = "Residuals", 
-breaks = 50, 
-col = "lightblue", 
-border = "white")
+     main = "Residuals Distribution HWSD", 
+     xlab = "Residuals", 
+     breaks = 50, 
+     col = "lightblue", 
+     border = "white")
 
 #Per GSOC
 residuals_gsoc <- residuals(glm_gsoc)
